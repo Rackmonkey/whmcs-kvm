@@ -1,62 +1,20 @@
 <?php
-/**
- * WHMCS SDK Sample Provisioning Module
- *
- * Provisioning Modules, also referred to as Product or Server Modules, allow
- * you to create modules that allow for the provisioning and management of
- * products and services in WHMCS.
- *
- * This sample file demonstrates how a provisioning module for WHMCS should be
- * structured and exercises all supported functionality.
- *
- * Provisioning Modules are stored in the /modules/servers/ directory. The
- * module name you choose must be unique, and should be all lowercase,
- * containing only letters & numbers, always starting with a letter.
- *
- * Within the module itself, all functions must be prefixed with the module
- * filename, followed by an underscore, and then the function name. For this
- * example file, the filename is "provisioningmodule" and therefore all
- * functions begin "provisioningmodule_".
- *
- * If your module or third party API does not support a given function, you
- * should not define that function within your module. Only the _ConfigOptions
- * function is required.
- *
- * For more information, please refer to the online documentation.
- *
- * @see http://docs.whmcs.com/Provisioning_Module_Developer_Docs
- *
- * @copyright Copyright (c) WHMCS Limited 2015
- * @license http://www.whmcs.com/license/ WHMCS Eula
- */
+
+use Illuminate\Database\Capsule\Manager as Capsule;
+use rackmonkey\kvm;
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
-// Require any libraries needed for the module to function.
-// require_once __DIR__ . '/path/to/library/loader.php';
-//
-// Also, perform any initialization required by the service's library.
-
-/**
- * Define module related meta data.
- *
- * Values returned here are used to determine module related abilities and
- * settings.
- *
- * @see http://docs.whmcs.com/Provisioning_Module_Meta_Data_Parameters
- *
- * @return array
- */
-function provisioningmodule_MetaData()
+function rack_kvm_MetaData()
 {
     return array(
-        'DisplayName' => 'Demo Provisioning Module',
+        'DisplayName' => 'Rackmonkey KVM',
         'APIVersion' => '1.1', // Use API Version 1.1
-        'RequiresServer' => true, // Set true if module requires a server to work
-        'DefaultNonSSLPort' => '1111', // Default Non-SSL Connection Port
-        'DefaultSSLPort' => '1112', // Default SSL Connection Port
+        'RequiresServer' => false, // Set true if module requires a server to work
+        'DefaultNonSSLPort' => '80', // Default Non-SSL Connection Port
+        'DefaultSSLPort' => '443', // Default SSL Connection Port
         'ServiceSingleSignOnLabel' => 'Login to Panel as User',
         'AdminSingleSignOnLabel' => 'Login to Panel as Admin',
     );
@@ -83,50 +41,32 @@ function provisioningmodule_MetaData()
  *
  * @return array
  */
-function provisioningmodule_ConfigOptions()
+function rack_kvm_ConfigOptions()
 {
     return array(
-        // a text field type allows for single line text input
-        'Text Field' => array(
+        'CPU' => array(
+            'Type' => 'text',
+            'Size' => '10',
+            'Default' => '1',
+            'Description' => 'Kerne',
+        ),
+        'RAM' => array(
             'Type' => 'text',
             'Size' => '25',
             'Default' => '1024',
-            'Description' => 'Enter in megabytes',
+            'Description' => 'Enter MB',
         ),
-        // a password field type allows for masked text input
-        'Password Field' => array(
-            'Type' => 'password',
+        'HDD' => array(
+            'Type' => 'text',
             'Size' => '25',
-            'Default' => '',
-            'Description' => 'Enter secret value here',
+            'Default' => '25',
+            'Description' => 'Enter GB',
         ),
-        // the yesno field type displays a single checkbox option
-        'Checkbox Field' => array(
-            'Type' => 'yesno',
-            'Description' => 'Tick to enable',
-        ),
-        // the dropdown field type renders a select menu of options
-        'Dropdown Field' => array(
-            'Type' => 'dropdown',
-            'Options' => array(
-                'option1' => 'Display Value 1',
-                'option2' => 'Second Option',
-                'option3' => 'Another Option',
-            ),
-            'Description' => 'Choose one',
-        ),
-        // the radio field type displays a series of radio button options
-        'Radio Field' => array(
-            'Type' => 'radio',
-            'Options' => 'First Option,Second Option,Third Option',
-            'Description' => 'Choose your option!',
-        ),
-        // the textarea field type allows for multi-line text input
-        'Textarea Field' => array(
-            'Type' => 'textarea',
-            'Rows' => '3',
-            'Cols' => '60',
-            'Description' => 'Freeform multi-line text input field',
+        'Backup' => array(
+            'Type' => 'text',
+            'Size' => '25',
+            'Default' => '25',
+            'Description' => 'Backupspace in GB',
         ),
     );
 }
@@ -147,38 +87,25 @@ function provisioningmodule_ConfigOptions()
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_CreateAccount(array $params)
+function rack_kvm_CreateAccount(array $params)
 {
+    $pdo = Capsule::connection()->getPdo();
+    $rkvm = new kvm($params);
+    $pdo->beginTransaction();
     try {
-        // Call the service's provisioning function, using the values provided
-        // by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'domain' => 'The domain of the service to provision',
-        //     'username' => 'The username to access the new service',
-        //     'password' => 'The password to access the new service',
-        //     'configoption1' => 'The amount of disk space to provision',
-        //     'configoption2' => 'The new services secret key',
-        //     'configoption3' => 'Whether or not to enable FTP',
-        //     ...
-        // )
-        // ```
+        // http://docs.whmcs.com/Provisioning_Module_Developer_Docs#Module_Parameters
+        $rkvm->create($pdo);
     } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'rack_kvm',
             __FUNCTION__,
             $params,
             $e->getMessage(),
             $e->getTraceAsString()
         );
-
+        $pdo->rollBack();
         return $e->getMessage();
     }
-
     return 'success';
 }
 
@@ -195,21 +122,19 @@ function provisioningmodule_CreateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_SuspendAccount(array $params)
+function rack_kvm_SuspendAccount(array $params)
 {
     try {
-        // Call the service's suspend function, using the values provided by
-        // WHMCS in `$params`.
+        Capsule::table('rack_kvm')->where('serviceid', $params["serviceid"])->update(['status' => "inactive"]);
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'suspend',
             __FUNCTION__,
             $params,
             $e->getMessage(),
             $e->getTraceAsString()
         );
-
         return $e->getMessage();
     }
 
@@ -229,15 +154,14 @@ function provisioningmodule_SuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_UnsuspendAccount(array $params)
+function rack_kvm_UnsuspendAccount(array $params)
 {
     try {
-        // Call the service's unsuspend function, using the values provided by
-        // WHMCS in `$params`.
+        Capsule::table('rack_kvm')->where('serviceid', $params["serviceid"])->update(['status' => "active"]);
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'unsuspend',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -250,27 +174,14 @@ function provisioningmodule_UnsuspendAccount(array $params)
     return 'success';
 }
 
-/**
- * Terminate instance of a product/service.
- *
- * Called when a termination is requested. This can be invoked automatically for
- * overdue products if enabled, or requested manually by an admin user.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- *
- * @return string "success" or an error message
- */
-function provisioningmodule_TerminateAccount(array $params)
+function rack_kvm_TerminateAccount(array $params)
 {
     try {
-        // Call the service's terminate function, using the values provided by
-        // WHMCS in `$params`.
+        Capsule::table('rack_kvm')->where('serviceid', $params["serviceid"])->update(['status' => "terminate"]);
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'terminate',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -283,40 +194,14 @@ function provisioningmodule_TerminateAccount(array $params)
     return 'success';
 }
 
-/**
- * Change the password for an instance of a product/service.
- *
- * Called when a password change is requested. This can occur either due to a
- * client requesting it via the client area or an admin requesting it from the
- * admin side.
- *
- * This option is only available to client end users when the product is in an
- * active status.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- *
- * @return string "success" or an error message
- */
-function provisioningmodule_ChangePassword(array $params)
+function rack_kvm_ChangePassword(array $params)
 {
     try {
-        // Call the service's change password function, using the values
-        // provided by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'username' => 'The service username',
-        //     'password' => 'The new service password',
-        // )
-        // ```
+
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'change password',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -329,81 +214,40 @@ function provisioningmodule_ChangePassword(array $params)
     return 'success';
 }
 
-/**
- * Upgrade or downgrade an instance of a product/service.
- *
- * Called to apply any change in product assignment or parameters. It
- * is called to provision upgrade or downgrade orders, as well as being
- * able to be invoked manually by an admin user.
- *
- * This same function is called for upgrades and downgrades of both
- * products and configurable options.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- *
- * @return string "success" or an error message
- */
-function provisioningmodule_ChangePackage(array $params)
+function rack_kvm_ChangePackage(array $params)
 {
+    $pdo = Capsule::connection()->getPdo();
+    $rkvm = new kvm($params);
+    $pdo->beginTransaction();
     try {
-        // Call the service's change password function, using the values
-        // provided by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'username' => 'The service username',
-        //     'configoption1' => 'The new service disk space',
-        //     'configoption3' => 'Whether or not to enable FTP',
-        // )
-        // ```
+        $rkvm->update($pdo);
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'change package',
             __FUNCTION__,
             $params,
             $e->getMessage(),
             $e->getTraceAsString()
         );
-
+        $pdo->rollBack();
         return $e->getMessage();
     }
 
     return 'success';
 }
 
-/**
- * Test connection with the given server parameters.
- *
- * Allows an admin user to verify that an API connection can be
- * successfully made with the given configuration parameters for a
- * server.
- *
- * When defined in a module, a Test Connection button will appear
- * alongside the Server Type dropdown when adding or editing an
- * existing server.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- *
- * @return array
- */
-function provisioningmodule_TestConnection(array $params)
+function rack_kvm_TestConnection(array $params)
 {
     try {
-        // Call the service's connection test function.
+        // ping?!
 
         $success = true;
         $errorMsg = '';
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'rack_kvm',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -420,59 +264,31 @@ function provisioningmodule_TestConnection(array $params)
     );
 }
 
-/**
- * Additional actions an admin user can invoke.
- *
- * Define additional actions that an admin user can perform for an
- * instance of a product/service.
- *
- * @see provisioningmodule_buttonOneFunction()
- *
- * @return array
- */
-function provisioningmodule_AdminCustomButtonArray()
+function rack_kvm_AdminCustomButtonArray()
 {
     return array(
-        "Button 1 Display Value" => "buttonOneFunction",
-        "Button 2 Display Value" => "buttonTwoFunction",
+        "start" => "start",
+        "stop" => "stop",
+        "reboot" => "reboot",
+        "shutdown" => "shutdown",
+        "rescue" => "rescue",
+        "noVNC" => "novnc",
     );
 }
 
-/**
- * Additional actions a client user can invoke.
- *
- * Define additional actions a client user can perform for an instance of a
- * product/service.
- *
- * Any actions you define here will be automatically displayed in the available
- * list of actions within the client area.
- *
- * @return array
- */
-function provisioningmodule_ClientAreaCustomButtonArray()
+function rack_kvm_ClientAreaCustomButtonArray()
 {
     return array(
-        "Action 1 Display Value" => "actionOneFunction",
-        "Action 2 Display Value" => "actionTwoFunction",
+        "start" => "start",
+        "stop" => "stop",
+        "reboot" => "reboot",
+        "shutdown" => "shutdown",
+        "rescue" => "rescue",
+        "noVNC" => "novnc",
     );
 }
 
-/**
- * Custom function for performing an additional action.
- *
- * You can define an unlimited number of custom functions in this way.
- *
- * Similar to all other module call functions, they should either return
- * 'success' or an error message to be displayed.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_AdminCustomButtonArray()
- *
- * @return string "success" or an error message
- */
-function provisioningmodule_buttonOneFunction(array $params)
+function rack_kvm_start(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -480,7 +296,7 @@ function provisioningmodule_buttonOneFunction(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'vm start',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -493,22 +309,7 @@ function provisioningmodule_buttonOneFunction(array $params)
     return 'success';
 }
 
-/**
- * Custom function for performing an additional action.
- *
- * You can define an unlimited number of custom functions in this way.
- *
- * Similar to all other module call functions, they should either return
- * 'success' or an error message to be displayed.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_ClientAreaCustomButtonArray()
- *
- * @return string "success" or an error message
- */
-function provisioningmodule_actionOneFunction(array $params)
+function rack_kvm_stop(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -516,7 +317,7 @@ function provisioningmodule_actionOneFunction(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'vm stop',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -541,11 +342,11 @@ function provisioningmodule_actionOneFunction(array $params)
  * @param array $params common module parameters
  *
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_AdminServicesTabFieldsSave()
+ * @see rack_kvm_AdminServicesTabFieldsSave()
  *
  * @return array
  */
-function provisioningmodule_AdminServicesTabFields(array $params)
+function rack_kvm_AdminServicesTabFields(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -557,15 +358,15 @@ function provisioningmodule_AdminServicesTabFields(array $params)
             'Number of Apples' => (int) $response['numApples'],
             'Number of Oranges' => (int) $response['numOranges'],
             'Last Access Date' => date("Y-m-d H:i:s", $response['lastLoginTimestamp']),
-            'Something Editable' => '<input type="hidden" name="provisioningmodule_original_uniquefieldname" '
+            'Something Editable' => '<input type="hidden" name="rack_kvm_original_uniquefieldname" '
                 . 'value="' . htmlspecialchars($response['textvalue']) . '" />'
-                . '<input type="text" name="provisioningmodule_uniquefieldname"'
+                . '<input type="text" name="rack_kvm_uniquefieldname"'
                 . 'value="' . htmlspecialchars($response['textvalue']) . '" />',
         );
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'rack_kvm',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -590,17 +391,17 @@ function provisioningmodule_AdminServicesTabFields(array $params)
  * @param array $params common module parameters
  *
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_AdminServicesTabFields()
+ * @see rack_kvm_AdminServicesTabFields()
  */
-function provisioningmodule_AdminServicesTabFieldsSave(array $params)
+function rack_kvm_AdminServicesTabFieldsSave(array $params)
 {
     // Fetch form submission variables.
-    $originalFieldValue = isset($_REQUEST['provisioningmodule_original_uniquefieldname'])
-        ? $_REQUEST['provisioningmodule_original_uniquefieldname']
+    $originalFieldValue = isset($_REQUEST['rack_kvm_original_uniquefieldname'])
+        ? $_REQUEST['rack_kvm_original_uniquefieldname']
         : '';
 
-    $newFieldValue = isset($_REQUEST['provisioningmodule_uniquefieldname'])
-        ? $_REQUEST['provisioningmodule_uniquefieldname']
+    $newFieldValue = isset($_REQUEST['rack_kvm_uniquefieldname'])
+        ? $_REQUEST['rack_kvm_uniquefieldname']
         : '';
 
     // Look for a change in value to avoid making unnecessary service calls.
@@ -611,7 +412,7 @@ function provisioningmodule_AdminServicesTabFieldsSave(array $params)
         } catch (Exception $e) {
             // Record the error in WHMCS's module log.
             logModuleCall(
-                'provisioningmodule',
+                'rack_kvm',
                 __FUNCTION__,
                 $params,
                 $e->getMessage(),
@@ -636,7 +437,7 @@ function provisioningmodule_AdminServicesTabFieldsSave(array $params)
  *
  * @return array
  */
-function provisioningmodule_ServiceSingleSignOn(array $params)
+function rack_kvm_ServiceSingleSignOn(array $params)
 {
     try {
         // Call the service's single sign-on token retrieval function, using the
@@ -650,7 +451,7 @@ function provisioningmodule_ServiceSingleSignOn(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'rack_kvm',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -681,7 +482,7 @@ function provisioningmodule_ServiceSingleSignOn(array $params)
  *
  * @return array
  */
-function provisioningmodule_AdminSingleSignOn(array $params)
+function rack_kvm_AdminSingleSignOn(array $params)
 {
     try {
         // Call the service's single sign-on admin token retrieval function,
@@ -695,7 +496,7 @@ function provisioningmodule_AdminSingleSignOn(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'rack_kvm',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -739,7 +540,7 @@ function provisioningmodule_AdminSingleSignOn(array $params)
  *
  * @return array
  */
-function provisioningmodule_ClientArea(array $params)
+function rack_kvm_ClientArea(array $params)
 {
     // Determine the requested action and set service call parameters based on
     // the action.
@@ -771,7 +572,7 @@ function provisioningmodule_ClientArea(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'rack_kvm',
             __FUNCTION__,
             $params,
             $e->getMessage(),
