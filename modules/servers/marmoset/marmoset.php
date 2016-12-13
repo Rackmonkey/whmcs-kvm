@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Capsule\Manager as Capsule;
-use rackmonkey\marmoset;
+use marmoset\marmoset as Marmoset;
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
@@ -10,7 +10,7 @@ if (!defined("WHMCS")) {
 function marmoset_MetaData()
 {
     return array(
-        'DisplayName' => 'Rackmonkey KVM',
+        'DisplayName' => 'Marmoset',
         'APIVersion' => '1.1', // Use API Version 1.1
         'RequiresServer' => false, // Set true if module requires a server to work
         'DefaultNonSSLPort' => '80', // Default Non-SSL Connection Port
@@ -41,11 +41,11 @@ function marmoset_ConfigOptions()
             'Default' => '25',
             'Description' => 'Enter GB',
         ),
-        'Backup' => array(
+        'Name-Prefix' => array(
             'Type' => 'text',
             'Size' => '25',
-            'Default' => '25',
-            'Description' => 'Backupspace in GB',
+            'Default' => 'marmo',
+            'Description' => 'Prefix für VM Namen',
         ),
     );
 }
@@ -53,7 +53,7 @@ function marmoset_ConfigOptions()
 function marmoset_CreateAccount(array $params)
 {
     $pdo = Capsule::connection()->getPdo();
-    $rkvm = new kvm($params);
+    $rkvm = new Marmoset($params);
     $pdo->beginTransaction();
     try {
         // http://docs.whmcs.com/Provisioning_Module_Developer_Docs#Module_Parameters
@@ -154,7 +154,7 @@ function marmoset_ChangePassword(array $params)
 function marmoset_ChangePackage(array $params)
 {
     $pdo = Capsule::connection()->getPdo();
-    $rkvm = new kvm($params);
+    $rkvm = new Marmoset($params);
     $pdo->beginTransaction();
     try {
         $rkvm->update($pdo);
