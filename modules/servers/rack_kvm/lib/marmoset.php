@@ -5,18 +5,32 @@ namespace rackmonkey;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
 
-class kvm {
+class marmoset {
     protected $params = array();
     protected $configOptions;
-    protected $configOptionCore;
-    protected $configOptionHDD;
-    protected $configOptionRAM;
-    protected $configOptionBackup;
     protected $serviceid;
     protected $serverid;
     protected $pid;
+
     protected $name; // name der VM
-    protected $hostname;
+    protected $username;
+    protected $ip;
+    protected $mac;
+    protected $uuid;
+    protected $cores;
+    protected $HDD;
+    protected $RAM;
+    protected $backup;
+    protected $vncport;
+    protected $wsport;
+    protected $vncpassword;
+
+    protected $loginname;
+    protected $loginpw;
+    protected $apiurl;
+
+    protected $table = "marmoset";
+
 
 
     public function __construct( $params, $debug = false ) {
@@ -32,20 +46,26 @@ class kvm {
         }
 
         $this->$configOptions		= $this->getParam( "configoptions" );
-        $this->$configOptionCore	= $this->getParam( "configoption1" );
-        $this->$configOptionHDD		= $this->getParam( "configoption3" );
-        $this->$configOptionRAM		= $this->getParam( "configoption2" );
-        $this->$configOptionBackup	= $this->getParam( "configoption4" );
+        $this->$core	= $this->getParam( "configoption1" );
+        $this->$HDD		= $this->getParam( "configoption3" );
+        $this->$RAM		= $this->getParam( "configoption2" );
+        $this->$Backup	= $this->getParam( "configoption4" );
 
         $this->serviceid = $this->getParam( "serviceid" ); # Unique ID of the product/service in the WHMCS Database
         $this->pid       = $this->getParam( "pid" ); # Product/Service ID
         $this->serverid  = $this->getParam( "serverid" ); 
-        $this->hostname  = $this->get_vm_name();
+        $this->name      = $this->get_vm_name();
+        $this->username  = substr($this->params["clientsdetails"]["firstname"], 0, 3) + substr($this->params["clientsdetails"]["lastname"], 0, 3) + $userid;
 
     }
 
     public function get_vm_name(){
-		return substr($this->params["clientsdetails"]["firstname"], 0, 3) + substr($this->params["clientsdetails"]["lastname"], 0, 3) + $this->params["serviceid"];
+        // checken ob schon ein name vergeben ist
+        if(false){
+
+        }else{
+		  return $this->username + $this->params["serviceid"];
+        }
     }
 
     public function create($pdo){
