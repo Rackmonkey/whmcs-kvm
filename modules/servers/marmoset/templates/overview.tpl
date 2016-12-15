@@ -2,7 +2,7 @@
 
 <p>Overview output goes here...</p>
 
-<p>Please Remember: When overriding the default product overview output, it is important to provide the product details and information that are normally displayed on this page. These are provided below.</p>
+<p>Hallo Welt 123!</p>
 
 <div class="alert alert-info">
     Any variables you define inside the ClientArea module function can also be accessed and used here, for example: {$extraVariable1} &amp; {$extraVariable2}

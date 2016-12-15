@@ -12,11 +12,11 @@ function marmoset_MetaData()
     return array(
         'DisplayName' => 'Marmoset',
         'APIVersion' => '1.1', // Use API Version 1.1
-        'RequiresServer' => false, // Set true if module requires a server to work
+        'RequiresServer' => true, // Set true if module requires a server to work
         'DefaultNonSSLPort' => '80', // Default Non-SSL Connection Port
-        'DefaultSSLPort' => '443', // Default SSL Connection Port
-        'ServiceSingleSignOnLabel' => 'Login to Panel as User',
-        'AdminSingleSignOnLabel' => 'Login to Panel as Admin',
+        //'DefaultSSLPort' => '443', // Default SSL Connection Port
+        //'ServiceSingleSignOnLabel' => 'Login to Panel as User',
+        //'AdminSingleSignOnLabel' => 'Login to Panel as Admin',
     );
 }
 
@@ -52,21 +52,16 @@ function marmoset_ConfigOptions()
 
 function marmoset_CreateAccount(array $params)
 {
-    $pdo = Capsule::connection()->getPdo();
-    $rkvm = new Marmoset($params);
-    $pdo->beginTransaction();
-    try {
-        // http://docs.whmcs.com/Provisioning_Module_Developer_Docs#Module_Parameters
-        $rkvm->create($pdo);
-    } catch (Exception $e) {
+    $m = new Marmoset($params);
+    $ret = $m->create();
+    if($ret != 'success'){
         logModuleCall(
-            'marmoset',
+            'create',
             __FUNCTION__,
             $params,
             $e->getMessage(),
             $e->getTraceAsString()
         );
-        $pdo->rollBack();
         return $e->getMessage();
     }
     return 'success';
@@ -74,9 +69,9 @@ function marmoset_CreateAccount(array $params)
 
 function marmoset_SuspendAccount(array $params)
 {
-    try {
-        Capsule::table('marmoset')->where('serviceid', $params["serviceid"])->update(['status' => "inactive"]);
-    } catch (Exception $e) {
+    $m = new Marmoset($params);
+    $ret = $m->suspend();
+    if($ret != 'success'){
         // Record the error in WHMCS's module log.
         logModuleCall(
             'suspend',
@@ -93,9 +88,9 @@ function marmoset_SuspendAccount(array $params)
 
 function marmoset_UnsuspendAccount(array $params)
 {
-    try {
-        Capsule::table('marmoset')->where('serviceid', $params["serviceid"])->update(['status' => "active"]);
-    } catch (Exception $e) {
+    $m = new Marmoset($params);
+    $ret = $m->unsuspend();
+    if($ret != 'success'){
         // Record the error in WHMCS's module log.
         logModuleCall(
             'unsuspend',
@@ -113,9 +108,9 @@ function marmoset_UnsuspendAccount(array $params)
 
 function marmoset_TerminateAccount(array $params)
 {
-    try {
-        Capsule::table('marmoset')->where('serviceid', $params["serviceid"])->update(['status' => "terminate"]);
-    } catch (Exception $e) {
+    $m = new Marmoset($params);
+    $ret = $m->terminate();
+    if($ret != 'success'){
         // Record the error in WHMCS's module log.
         logModuleCall(
             'terminate',
@@ -131,11 +126,12 @@ function marmoset_TerminateAccount(array $params)
     return 'success';
 }
 
+/*
 function marmoset_ChangePassword(array $params)
 {
-    try {
-
-    } catch (Exception $e) {
+    $m = new Marmoset($params);
+    $ret = $m->changePassword();
+    if($ret != 'success'){
         // Record the error in WHMCS's module log.
         logModuleCall(
             'change password',
@@ -144,21 +140,17 @@ function marmoset_ChangePassword(array $params)
             $e->getMessage(),
             $e->getTraceAsString()
         );
-
         return $e->getMessage();
     }
 
     return 'success';
-}
+}*/
 
 function marmoset_ChangePackage(array $params)
 {
-    $pdo = Capsule::connection()->getPdo();
-    $rkvm = new Marmoset($params);
-    $pdo->beginTransaction();
-    try {
-        $rkvm->update($pdo);
-    } catch (Exception $e) {
+    $m = new Marmoset($params);
+    $ret = $m->update();
+    if($ret != 'success'){
         // Record the error in WHMCS's module log.
         logModuleCall(
             'change package',
@@ -167,13 +159,13 @@ function marmoset_ChangePackage(array $params)
             $e->getMessage(),
             $e->getTraceAsString()
         );
-        $pdo->rollBack();
         return $e->getMessage();
     }
 
     return 'success';
 }
 
+/* 
 function marmoset_TestConnection(array $params)
 {
     try {
@@ -199,7 +191,7 @@ function marmoset_TestConnection(array $params)
         'success' => $success,
         'error' => $errorMsg,
     );
-}
+} */
 
 function marmoset_AdminCustomButtonArray()
 {
@@ -227,6 +219,7 @@ function marmoset_ClientAreaCustomButtonArray()
 
 function marmoset_start(array $params)
 {
+	return "hello world";
     try {
         // Call the service's function, using the values provided by WHMCS in
         // `$params`.
@@ -331,61 +324,6 @@ function marmoset_AdminServicesTabFieldsSave(array $params)
     }
 }
 
-function marmoset_ServiceSingleSignOn(array $params)
-{
-    try {
-        // Call the service's single sign-on token retrieval function, using the
-        // values provided by WHMCS in `$params`.
-        $response = array();
-
-        return array(
-            'success' => true,
-            'redirectTo' => $response['redirectUrl'],
-        );
-    } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'marmoset',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        return array(
-            'success' => false,
-            'errorMsg' => $e->getMessage(),
-        );
-    }
-}
-
-function marmoset_AdminSingleSignOn(array $params)
-{
-    try {
-        // Call the service's single sign-on admin token retrieval function,
-        // using the values provided by WHMCS in `$params`.
-        $response = array();
-
-        return array(
-            'success' => true,
-            'redirectTo' => $response['redirectUrl'],
-        );
-    } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'marmoset',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        return array(
-            'success' => false,
-            'errorMsg' => $e->getMessage(),
-        );
-    }
-}
 
 /**
  * Client area output logic handling.
