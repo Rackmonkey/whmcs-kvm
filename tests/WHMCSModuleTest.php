@@ -17,7 +17,7 @@
 class WHMCSModuleTest extends PHPUnit_Framework_TestCase
 {
     /** @var string $moduleName */
-    protected $moduleName = 'provisioningmodule';
+    protected $moduleName = 'marmoset';
 
     /**
      * Asserts the required config options function is defined.
@@ -27,54 +27,42 @@ class WHMCSModuleTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(function_exists($this->moduleName . '_ConfigOptions'));
     }
 
-    /**
-     * Data provider of module function return data types.
-     *
-     * Used in verifying module functions return data of the correct type.
-     *
-     * @return array
-     */
-    public function providerFunctionReturnTypes()
-    {
+    public function providerIP(){
         return array(
-            'Config Options' => array('ConfigOptions', 'array'),
-            'Meta Data' => array('MetaData', 'array'),
-            'Create' => array('CreateAccount', 'string'),
-            'Suspend' => array('SuspendAccount', 'string'),
-            'Unsuspend' => array('UnsuspendAccount', 'string'),
-            'Terminate' => array('TerminateAccount', 'string'),
-            'Change Password' => array('ChangePassword', 'string'),
-            'Change Package' => array('ChangePackage', 'string'),
-            'Test Connection' => array('TestConnection', 'array'),
-            'Admin Area Custom Button Array' => array('AdminCustomButtonArray', 'array'),
-            'Client Area Custom Button Array' => array('ClientAreaCustomButtonArray', 'array'),
-            'Admin Services Tab Fields' => array('AdminServicesTabFields', 'array'),
-            'Admin Services Tab Fields Save' => array('AdminServicesTabFieldsSave', 'null'),
-            'Service Single Sign-On' => array('ServiceSingleSignOn', 'array'),
-            'Admin Single Sign-On' => array('AdminSingleSignOn', 'array'),
-            'Client Area Output' => array('ClientArea', 'array'),
+            array('192.168.0.1', true),
+            array('88.198.244.252', true),
+            array('88.198.244.257', false),
+            array('0.198.244.252', false),
         );
     }
-
+    
+    public function providerCIDR(){
+        return array(
+            array('192.168.0.1/24', 256, "255.255.255.0", "192.168.0.1", true),
+            array('88.198.244.252/30', 4, "255.255.255.252", "88.198.244.252", true),
+            array('88.198.253.0/27', 32, "255.255.255.224", "88.198.253.0", true),
+            array('178.63.176.32/27', 32, "255.255.255.224", "178.63.176.32", true),
+            array('78.46.169.142/32', 1, "255.255.255.255", "78.46.169.142", true),
+        );
+    }
+    
     /**
-     * Test module functions return appropriate data types.
-     *
-     * @param string $function
-     * @param string $returnType
-     *
-     * @dataProvider providerFunctionReturnTypes
+     * @dataProvider providerCIDR
      */
-    public function testFunctionsReturnAppropriateDataType($function, $returnType)
-    {
-        if (function_exists($this->moduleName . '_' . $function)) {
-            $result = call_user_func($this->moduleName . '_' . $function, array());
-            if ($returnType == 'array') {
-                $this->assertTrue(is_array($result));
-            } elseif ($returnType == 'null') {
-                $this->assertTrue(is_null($result));
-            } else {
-                $this->assertTrue(is_string($result));
-            }
-        }
+    
+    public function testCIDR($cidr, $size, $mask, $ip, $return){
+    	$this->assertEquals($size, getIpAnzahl(explode("/",$cidr)[1]));
+    	$this->assertEquals($return, checkCIDR($cidr));
+    	$this->assertEquals($mask, cidr2mask($cidr));
+    	$this->assertEquals($cidr, $ip."/".(string)mask2cidr($mask));
+    	
+    }
+    
+        /**
+     * @dataProvider providerIP
+     */
+    
+    public function testIP($ip, $returnType){
+    	
     }
 }

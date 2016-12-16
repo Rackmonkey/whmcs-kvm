@@ -1,8 +1,8 @@
 <?php
 
-namespace marmoset;
+namespace Curl;
 
-class curl{
+class Curl{
     protected $data = array();
     protected $baseUrl;
     protected $curl;
