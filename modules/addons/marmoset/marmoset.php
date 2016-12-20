@@ -21,6 +21,11 @@ use Marmoset\Marmoset as Marmoset;
 
 $table = "mod_ip_manager";
 
+$status_ok = 1;
+$status_suspended = 2;
+$status_deleted = 3;
+$status_undefined = 0;
+
 // Addon ip_manager muss installiert sein, prüfen das über die table
 //if(mysql_num_rows(mysql_query("SHOW TABLES LIKE " . $table )) > 0){
 
@@ -100,11 +105,35 @@ $table = "mod_ip_manager";
 	    }
 	}
 	
+	function table(){
+	        	$list = Capsule::table("mod_marmoset")->get();
+                echo "<h3>{$vars['_lang']['masterlist']}</h3>";
+                echo "<div class='tablebg'>";
+                echo "<table class='datatable' border='0' width='100%' cellspacing='1' cellpadding=3>";
+                echo "<thead><tr><th>ID</th><th>Service</th><th>name</th><th>UUID</th><th>MAC</th><th>Status</th></thead>";
+                echo "<tbody>";
+                foreach ($list as $server) {
+                    echo "<tr>";
+                    echo "<td>{$server->id}</td>";
+                    echo "<td>{$server->serviceid}</td>";
+                    echo "<td>{$server->name}</td>";
+                    echo "<td>{$server->uuid}</td>";
+                    echo "<td>{$server->mac}</td>";
+                    if($server->status == $status_ok){echo "<td>OK</td>";}
+                    else if($server->status == $status_suspended){echo "<td>suspended</td>";}
+                    else if($server->status == $status_deleted){echo "<td>deleted</td>";}
+                    else if($server->status == $status_undefined){echo "<td>undefined</td>";}
+                    else {echo "<td>dafuq</td>";}
+                    echo "</tr>";
+                }
+                echo "</tbody></table>";
+                echo "</div>";
+}
+	
 
 	
 	function marmoset_output($vars){
-		echo "marmoset output";
-		print_r($vars);
+		table();
 	}
 //}
 ?>

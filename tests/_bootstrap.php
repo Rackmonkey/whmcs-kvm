@@ -11,21 +11,7 @@ require_once __DIR__ . '/../modules/servers/marmoset/marmoset.php';
 require_once __DIR__ . '/../modules/addons/marmoset/marmoset.php';
 require_once __DIR__ . '/../modules/addons/ip_manager/ip_manager.php';
 
-/**
- * Mock logModuleCall function for testing purposes.
- *
- * Inside of WHMCS, this function provides logging of module calls for debugging
- * purposes. The module log is accessed via Utilities > Logs.
- *
- * @param string $module
- * @param string $action
- * @param string|array $request
- * @param string|array $response
- * @param string|array $data
- * @param array $variablesToMask
- *
- * @return void|false
- */
+
 function logModuleCall(
     $module,
     $action,

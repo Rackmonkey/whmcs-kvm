@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/lib/marmoset.php';
 
+
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Marmoset\Marmoset as Marmoset;
 

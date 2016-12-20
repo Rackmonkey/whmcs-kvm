@@ -12,8 +12,7 @@ function deleteCache()
 add_hook("ClientAreaPage",1,"deleteCache","");
 
 
-function hook_provisioningmodule_clientedit(array $params)
-{
+function hook_provisioningmodule_clientedit(array $params){
     try {
         // Call the service's function, using the values provided by WHMCS in
         // `$params`.
@@ -24,8 +23,7 @@ function hook_provisioningmodule_clientedit(array $params)
 
 add_hook('ClientEdit', 1, 'hook_provisioningmodule_clientedit');
 
-add_hook('ClientAreaPrimaryNavbar', 1, function ($menu)
-{
+add_hook('ClientAreaPrimaryNavbar', 1, function ($menu){
     // Check whether the services menu exists.
     /*if (!is_null($menu->getChild('Services'))) {
         // Add a link to the module filter.
